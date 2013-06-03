@@ -29,6 +29,7 @@ module ActiveMerchant #:nodoc:
           mapping :credential3, "SECURITY.SENDER"
           mapping :credential4, "TRANSACTION.CHANNEL"
           mapping :amount,      "PRESENTATION.AMOUNT"
+          mapping :order,       "IDENTIFICATION.TRANSACTIONID"
 
           def get_redirect_url(response_url)
             # merge static fields + response_url
@@ -57,6 +58,11 @@ module ActiveMerchant #:nodoc:
             else
               "https://heidelpay.hpcgw.net/sgw/gtw"
             end
+          end
+
+          # set the usage / verwendungszweck
+          def usage=(str)
+            @fields["PRESENTATION.USAGE"] = str
           end
 
           private

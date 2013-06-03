@@ -16,6 +16,8 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
       :credential4            => '31HA07BC810C91F086433734258F6628', # heidelpay channel
       :test                   => true)
 
+    @helper.usage = "Verwendungszweck"
+
     @url = 'http://example.com'
   end
 
@@ -95,6 +97,24 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
   def test_transaction_mode
     @helper.expects(:ssl_post).with do |url, data|
       assert data.include?("TRANSACTION.MODE=INTEGRATOR_TEST")
+      true
+    end
+
+    @helper.get_redirect_url("http://example.com/")
+  end
+
+  def test_order_id
+    @helper.expects(:ssl_post).with do |url, data|
+      assert data.include?("IDENTIFICATION.TRANSACTIONID=42")
+      true
+    end
+
+    @helper.get_redirect_url("http://example.com/")
+  end
+
+  def test_usage
+    @helper.expects(:ssl_post).with do |url, data|
+      assert data.include?("PRESENTATION.USAGE=Verwendungszweck")
       true
     end
 
