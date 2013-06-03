@@ -28,7 +28,7 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
       true
     end
 
-    @helper.form_fields
+    @helper.get_redirect_url("http://example.com/")
   end
 
   def test_empty_fields
@@ -42,7 +42,7 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
       true
     end
 
-    @helper.form_fields
+    @helper.get_redirect_url("http://example.com/")
   end
 
   def test_currency
@@ -51,7 +51,25 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
       true
     end
 
-    @helper.form_fields
+    @helper.get_redirect_url("http://example.com/")
+  end
+
+  def test_payment_code
+    @helper.expects(:ssl_post).with do |url, data|
+      assert data.include?("PAYMENT.CODE=CC.DB")
+      true
+    end
+
+    @helper.get_redirect_url("http://example.com/")
+  end
+
+  def test_response_url
+    @helper.expects(:ssl_post).with do |url, data|
+      assert data.include?("FRONTEND.RESPONSE_URL=http://example.com/")
+      true
+    end
+
+    @helper.get_redirect_url("http://example.com/")
   end
 
 end

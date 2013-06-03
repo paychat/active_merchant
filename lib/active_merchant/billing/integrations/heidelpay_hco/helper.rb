@@ -14,7 +14,8 @@ module ActiveMerchant #:nodoc:
             "ACCOUNT.EXPIRY_MONTH"  => "",
             "ACCOUNT.EXPIRY_YEAR"   => "",
             "ACCOUNT.VERIFICATION"  => "",
-            "PRESENTATION.CURRENCY" => "EUR"
+            "PRESENTATION.CURRENCY" => "EUR",
+            "PAYMENT.CODE"          => "CC.DB"
           }
 
           mapping :account,     "USER.LOGIN"
@@ -22,14 +23,9 @@ module ActiveMerchant #:nodoc:
           mapping :credential3, "SECURITY.SENDER"
           mapping :credential4, "TRANSACTION.CHANNEL"
 
-          def form_fields
-            { :redirect_url => get_redirect_url }
-          end
-
-          private
-
-          def get_redirect_url
+          def get_redirect_url(target_url)
             @fields.merge!(STATIC_FIELDS)
+            @fields.merge!("FRONTEND.RESPONSE_URL" => target_url)
             fields = serialize_params(@fields)
             response = ssl_post(gateway_url, fields)
           end
@@ -41,6 +37,8 @@ module ActiveMerchant #:nodoc:
               "https://heidelpay.hpcgw.net/sgw/gtw"
             end
           end
+
+          private
 
           def serialize_params(hash)
             hash.map{ |key, value| "#{key}=#{value}" }.join("&")
