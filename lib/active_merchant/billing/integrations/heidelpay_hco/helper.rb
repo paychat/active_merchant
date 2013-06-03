@@ -7,6 +7,16 @@ module ActiveMerchant #:nodoc:
       module HeidelpayHco
         class Helper < ActiveMerchant::Billing::Integrations::Helper
 
+          STATIC_FIELDS = {
+            "ACCOUNT.HOLDER"        => "",
+            "ACCOUNT.NUMBER"        => "",
+            "ACCOUNT.BRAND"         => "",
+            "ACCOUNT.EXPIRY_MONTH"  => "",
+            "ACCOUNT.EXPIRY_YEAR"   => "",
+            "ACCOUNT.VERIFICATION"  => "",
+            "PRESENTATION.CURRENCY" => "EUR"
+          }
+
           mapping :account,     "USER.LOGIN"
           mapping :credential2, "USER.PWD"
           mapping :credential3, "SECURITY.SENDER"
@@ -19,6 +29,7 @@ module ActiveMerchant #:nodoc:
           private
 
           def get_redirect_url
+            @fields.merge!(STATIC_FIELDS)
             fields = serialize_params(@fields)
             response = ssl_post(gateway_url, fields)
           end
