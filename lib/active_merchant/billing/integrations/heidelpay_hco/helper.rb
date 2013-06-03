@@ -8,14 +8,20 @@ module ActiveMerchant #:nodoc:
         class Helper < ActiveMerchant::Billing::Integrations::Helper
 
           STATIC_FIELDS = {
-            "ACCOUNT.HOLDER"        => "",
-            "ACCOUNT.NUMBER"        => "",
-            "ACCOUNT.BRAND"         => "",
-            "ACCOUNT.EXPIRY_MONTH"  => "",
-            "ACCOUNT.EXPIRY_YEAR"   => "",
-            "ACCOUNT.VERIFICATION"  => "",
-            "PRESENTATION.CURRENCY" => "EUR",
-            "PAYMENT.CODE"          => "CC.DB"
+            "ACCOUNT.HOLDER"             => "",
+            "ACCOUNT.NUMBER"             => "",
+            "ACCOUNT.BRAND"              => "",
+            "ACCOUNT.EXPIRY_MONTH"       => "",
+            "ACCOUNT.EXPIRY_YEAR"        => "",
+            "ACCOUNT.VERIFICATION"       => "",
+            "PRESENTATION.CURRENCY"      => "EUR",
+            "PAYMENT.CODE"               => "CC.DB",
+            "FRONTEND.MODE"              => "DEFAULT",
+            "FRONTEND.ENABLED"           => "true",
+            "FRONTEND.POPUP"             => "false",
+            "FRONTEND.REDIRECT_TIME"     => "0",
+            "FRONTEND.LANGUAGE_SELECTOR" => "true",
+            "REQUEST.VERSION"            => "1.0"
           }
 
           mapping :account,     "USER.LOGIN"
@@ -32,6 +38,9 @@ module ActiveMerchant #:nodoc:
             # convert amount to the right representation (%.2f)
             amount = @fields["PRESENTATION.AMOUNT"].to_i / 100
             @fields["PRESENTATION.AMOUNT"] = "%.2f" % amount
+
+            # add the current locale
+            @fields["FRONTEND.LANGUAGE"] = I18n.locale.upcase
 
             # post to heidelpay gateway to get the redirect url
             fields = serialize_params(@fields)

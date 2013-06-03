@@ -74,12 +74,22 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
 
   def test_amount
     @helper.expects(:ssl_post).with do |url, data|
-    puts data
       assert data.include?("PRESENTATION.AMOUNT=5.00")
       true
     end
 
     @helper.get_redirect_url("http://example.com/")
+  end
+
+  def test_locale
+    @helper.expects(:ssl_post).with do |url, data|
+      assert data.include?("FRONTEND.LANGUAGE=NL")
+      true
+    end
+
+    I18n.with_locale(:nl) do
+      @helper.get_redirect_url("http://example.com/")
+    end
   end
 
 end
