@@ -31,6 +31,15 @@ module ActiveMerchant #:nodoc:
           mapping :amount,      "PRESENTATION.AMOUNT"
           mapping :order,       "IDENTIFICATION.TRANSACTIONID"
 
+          mapping :billing_address,
+             :first_name => "NAME.GIVEN",
+             :last_name  =>  "NAME.FAMILY",
+             :city       => 'ADDRESS.CITY',
+             :address    => 'ADDRESS.STREET',
+             :zip        => 'ADDRESS.ZIP',
+             :country    => 'ADDRESS.COUNTRY',
+             :email      => 'CONTACT.EMAIL'
+
           def get_redirect_url(response_url)
             # merge static fields + response_url
             @fields.merge!(STATIC_FIELDS)

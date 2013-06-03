@@ -16,8 +16,6 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
       :credential4            => '31HA07BC810C91F086433734258F6628', # heidelpay channel
       :test                   => true)
 
-    @helper.usage = "Verwendungszweck"
-
     @url = 'http://example.com'
   end
 
@@ -113,6 +111,8 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
   end
 
   def test_usage
+    @helper.usage = "Verwendungszweck"
+
     @helper.expects(:ssl_post).with do |url, data|
       assert data.include?("PRESENTATION.USAGE=Verwendungszweck")
       true
@@ -120,5 +120,30 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
 
     @helper.get_redirect_url("http://example.com/")
   end
+
+  def test_customer_data
+    @helper.billing_address(
+      :first_name => "Hanz",
+      :last_name  => "Mustermann",
+      :address    => "Musterstrasse 1",
+      :zip        => "12345",
+      :city       => "Demo City",
+      :country    => "DE",
+      :email      => "test@test.de")
+
+    @helper.expects(:ssl_post).with do |url, data|
+      assert data.include?("NAME.GIVEN=Hanz")
+      assert data.include?("NAME.FAMILY=Mustermann")
+      assert data.include?("ADDRESS.STREET=Musterstrasse 1")
+      assert data.include?("ADDRESS.ZIP=12345")
+      assert data.include?("ADDRESS.CITY=Demo City")
+      assert data.include?("ADDRESS.COUNTRY=DE")
+      assert data.include?("CONTACT.EMAIL=test@test.de")
+      true
+    end
+
+    @helper.get_redirect_url("http://example.com/")
+  end
+
 
 end
