@@ -92,4 +92,13 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
     end
   end
 
+  def test_transaction_mode
+    @helper.expects(:ssl_post).with do |url, data|
+      assert data.include?("TRANSACTION.MODE=INTEGRATOR_TEST")
+      true
+    end
+
+    @helper.get_redirect_url("http://example.com/")
+  end
+
 end

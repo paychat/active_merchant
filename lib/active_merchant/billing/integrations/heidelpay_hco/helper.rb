@@ -42,6 +42,10 @@ module ActiveMerchant #:nodoc:
             # add the current locale
             @fields["FRONTEND.LANGUAGE"] = I18n.locale.upcase
 
+            # add the transaction mode (live vs. test)
+            txmode = test? ? "INTEGRATOR_TEST" : "LIVE"
+            @fields["TRANSACTION.MODE"] = txmode
+
             # post to heidelpay gateway to get the redirect url
             fields = serialize_params(@fields)
             response = ssl_post(gateway_url, fields)
