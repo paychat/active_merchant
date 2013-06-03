@@ -6,6 +6,7 @@ module ActiveMerchant #:nodoc:
     module Integrations #:nodoc:
       module HeidelpayHco
         class Helper < ActiveMerchant::Billing::Integrations::Helper
+          include PostsData
 
           STATIC_FIELDS = {
             "ACCOUNT.HOLDER"             => "",
@@ -58,7 +59,12 @@ module ActiveMerchant #:nodoc:
 
             # post to heidelpay gateway to get the redirect url
             fields = serialize_params(@fields)
-            response = ssl_post(gateway_url, fields)
+            resp = ssl_post(gateway_url, fields)
+            return nil unless resp
+
+            # parse the response parameters and return the response url
+            resp_fields = parse_params(resp)
+            URI::decode(resp_fields["FRONTEND.REDIRECT_URL"])
           end
 
           def gateway_url
@@ -78,6 +84,10 @@ module ActiveMerchant #:nodoc:
 
           def serialize_params(hash)
             hash.map{ |key, value| "#{key}=#{value}" }.join("&")
+          end
+
+          def parse_params(string)
+            Hash[string.split("&").compact.map{ |tuple| tuple.split("=") }]
           end
 
         end

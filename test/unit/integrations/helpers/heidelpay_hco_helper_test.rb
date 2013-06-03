@@ -145,5 +145,20 @@ class HeidelpayHcoHelperTest < Test::Unit::TestCase
     @helper.get_redirect_url("http://example.com/")
   end
 
+  def test_successful_response
+    @helper.billing_address(
+      :first_name => "Hanz",
+      :last_name  => "Mustermann",
+      :address    => "Musterstrasse 1",
+      :zip        => "12345",
+      :city       => "Demo City",
+      :country    => "DE",
+      :email      => "test@test.de")
+
+    @helper.usage = "Verwendungszweck"
+
+    resp = @helper.get_redirect_url("http://example.com/")
+    assert resp.include?("hcoForm.jsp")
+  end
 
 end
