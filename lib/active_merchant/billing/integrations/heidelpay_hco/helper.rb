@@ -22,10 +22,18 @@ module ActiveMerchant #:nodoc:
           mapping :credential2, "USER.PWD"
           mapping :credential3, "SECURITY.SENDER"
           mapping :credential4, "TRANSACTION.CHANNEL"
+          mapping :amount,      "PRESENTATION.AMOUNT"
 
-          def get_redirect_url(target_url)
+          def get_redirect_url(response_url)
+            # merge static fields + response_url
             @fields.merge!(STATIC_FIELDS)
-            @fields.merge!("FRONTEND.RESPONSE_URL" => target_url)
+            @fields.merge!("FRONTEND.RESPONSE_URL" => response_url)
+
+            # convert amount to the right representation (%.2f)
+            amount = @fields["PRESENTATION.AMOUNT"].to_i / 100
+            @fields["PRESENTATION.AMOUNT"] = "%.2f" % amount
+
+            # post to heidelpay gateway to get the redirect url
             fields = serialize_params(@fields)
             response = ssl_post(gateway_url, fields)
           end
