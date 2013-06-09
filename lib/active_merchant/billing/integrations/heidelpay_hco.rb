@@ -8,7 +8,7 @@
 #  In the "checkout" action, call this, it will return a url on heidelpays server:
 #
 #     helper = HeidelpayHco::Helper.new(
-#       '42',                                                          # order no.
+#       '42',                                                          # transaction id (chosen by you).
 #       '31ha07bc810c91f086431f7471d042d6',                            # heidelpay login
 #       :amount                 => 500,                                # amount in cents
 #       :credential2            => 'password',                         # heidelpay password
@@ -28,6 +28,9 @@
 #     # set the usage / payment title
 #     @helper.usage = "Verwendungszweck"
 #
+#     # set the amount (23.50€)
+#     @helper.amount = 2350
+#
 #     # this returns a url
 #     helper.get_redirect_uri("/my_response_url")
 #
@@ -36,10 +39,19 @@
 #
 # > Step 3:
 #  Heidelpay will redirect the user back to the url you provided ("/my_response_url" in
-#  the example above). The action that responds to this response url must call this:
+#  the example above). The action that responds to this response url must call this code
+#  and respond with another url (to which heidelpay will redirect the user)
 #
-#     ... notification example ...
+#     notify = ActiveMerchant::Billing::Integrations::HeidelpayHco::Notification.new(params)
 #
+#     if notify.success?
+#       notify.amount # => "23.50"
+#       notify.transaction_id # => "42" (the id you passed above)
+#       notify.received_at # => time at which this tx was processed
+#       # process order here
+#     end
+#
+#     render :text => "http://my-target-url.com/"
 #
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
