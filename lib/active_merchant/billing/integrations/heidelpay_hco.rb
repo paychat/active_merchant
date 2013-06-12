@@ -7,7 +7,7 @@
 # > Step1:
 #  In the "checkout" action, call this, it will return a url on heidelpays server:
 #
-#     helper = HeidelpayHco::Helper.new(
+#     @helper = HeidelpayHco::Helper.new(
 #       '42',                                                          # transaction id (chosen by you).
 #       '31ha07bc810c91f086431f7471d042d6',                            # heidelpay login
 #       :amount                 => 500,                                # amount in cents
@@ -26,10 +26,11 @@
 #       :email      => "test@test.de")
 #
 #     # set the usage / payment title
-#     @helper.usage = "Verwendungszweck"
+#     @helper.description = "Verwendungszweck"
 #
 #     # set the amount (23.50€)
 #     @helper.amount = 2350
+#     @helper.currency = 'EUR'
 #
 #     # this returns a url
 #     helper.get_redirect_uri("/my_response_url")
@@ -59,6 +60,24 @@ module ActiveMerchant #:nodoc:
       module HeidelpayHco
         autoload :Helper,       'active_merchant/billing/integrations/heidelpay_hco/helper.rb'
         autoload :Notification, 'active_merchant/billing/integrations/heidelpay_hco/notification.rb'
+
+        mattr_accessor :test_url
+        self.test_url = 'https://test-heidelpay.hpcgw.net/sgw/gtw'
+
+        mattr_accessor :production_url
+        self.production_url = 'https://heidelpay.hpcgw.net/sgw/gtw'
+
+        def self.service_url
+          mode = ActiveMerchant::Billing::Base.integration_mode
+          case mode
+            when :production
+              self.production_url
+            when :test
+              self.test_url
+            else
+              raise StandardError, "Integration mode set to an invalid value: #{mode}"
+          end
+        end
 
         def self.notification(post, options = {})
           Notification.new(post)

@@ -8,88 +8,65 @@ module ActiveMerchant #:nodoc:
         class Helper < ActiveMerchant::Billing::Integrations::Helper
           include PostsData
 
-          STATIC_FIELDS = {
-            "ACCOUNT.HOLDER"             => "",
-            "ACCOUNT.NUMBER"             => "",
-            "ACCOUNT.BRAND"              => "",
-            "ACCOUNT.EXPIRY_MONTH"       => "",
-            "ACCOUNT.EXPIRY_YEAR"        => "",
-            "ACCOUNT.VERIFICATION"       => "",
-            "PRESENTATION.CURRENCY"      => "EUR",
-            "PAYMENT.CODE"               => "CC.DB",
-            "FRONTEND.MODE"              => "DEFAULT",
-            "FRONTEND.ENABLED"           => "true",
-            "FRONTEND.POPUP"             => "false",
-            "FRONTEND.REDIRECT_TIME"     => "0",
-            "FRONTEND.LANGUAGE_SELECTOR" => "true",
-            "REQUEST.VERSION"            => "1.0"
-          }
+          mapping :account,     'USER.LOGIN'
+          mapping :credential2, 'USER.PWD'
+          mapping :credential3, 'SECURITY.SENDER'
+          mapping :credential4, 'TRANSACTION.CHANNEL'
 
-          mapping :account,     "USER.LOGIN"
-          mapping :credential2, "USER.PWD"
-          mapping :credential3, "SECURITY.SENDER"
-          mapping :credential4, "TRANSACTION.CHANNEL"
-          mapping :amount,      "PRESENTATION.AMOUNT"
-          mapping :order,       "IDENTIFICATION.TRANSACTIONID"
+          mapping :amount, 'PRESENTATION.AMOUNT'
+          mapping :currency, 'PRESENTATION.CURRENCY'
+          mapping :order, 'IDENTIFICATION.TRANSACTIONID'
+
+          mapping :description, 'PRESENTATION.USAGE'
+          mapping :language, 'FRONTEND.LANGUAGE'
+          mapping :return_url, 'FRONTEND.RESPONSE_URL'
 
           mapping :billing_address,
-             :first_name => "NAME.GIVEN",
-             :last_name  =>  "NAME.FAMILY",
-             :city       => 'ADDRESS.CITY',
-             :address    => 'ADDRESS.STREET',
-             :zip        => 'ADDRESS.ZIP',
-             :country    => 'ADDRESS.COUNTRY',
-             :email      => 'CONTACT.EMAIL'
+            :first_name => 'NAME.GIVEN',
+            :last_name => 'NAME.FAMILY',
+            :city => 'ADDRESS.CITY',
+            :address => 'ADDRESS.STREET',
+            :zip => 'ADDRESS.ZIP',
+            :country => 'ADDRESS.COUNTRY',
+            :email => 'CONTACT.EMAIL'
+
+          def initialize(order, account, options = {})
+            super
+            add_field 'REQUEST.VERSION', '1.0'
+            add_field 'TRANSACTION.MODE', (test? ? 'INTEGRATOR_TEST' : 'LIVE')
+            add_field 'FRONTEND.LANGUAGE_SELECTOR', 'true'
+            add_field 'FRONTEND.ENABLED', 'true'
+            add_field 'FRONTEND.POPUP', 'false'
+            add_field 'FRONTEND.MODE', 'DEFAULT'
+            add_field 'FRONTEND.LANGUAGE', I18n.locale.upcase
+
+            #add_field 'ACCOUNT.HOLDER', ''
+            #add_field 'ACCOUNT.NUMBER', ''
+            #add_field 'ACCOUNT.BRAND', ''
+            #add_field 'ACCOUNT.EXPIRY_MONTH', ''
+            #add_field 'ACCOUNT.EXPIRY_YEAR', ''
+            #add_field 'ACCOUNT.VERIFICATION', ''
+            #add_field 'PAYMENT.CODE', 'CC.DB'
+            #add_field 'FRONTEND.REDIRECT_TIME', '0'
+          end
 
           def get_redirect_url(response_url)
-            # merge static fields + response_url
-            @fields.merge!(STATIC_FIELDS)
-            @fields.merge!("FRONTEND.RESPONSE_URL" => response_url)
+            self.return_url = response_url
 
             # convert amount to the right representation (%.2f)
-            amount = @fields["PRESENTATION.AMOUNT"].to_i / 100
-            @fields["PRESENTATION.AMOUNT"] = "%.2f" % amount
+            @fields['PRESENTATION.AMOUNT'] = '%.2f' % @fields['PRESENTATION.AMOUNT']
 
-            # add the current locale
-            @fields["FRONTEND.LANGUAGE"] = I18n.locale.upcase
+            request = URI.encode_www_form form_fields
+            response = CGI.parse ssl_post(ActiveMerchant::Billing::Integrations::HeidelpayHco.service_url, request)
 
-            # add the transaction mode (live vs. test)
-            txmode = test? ? "INTEGRATOR_TEST" : "LIVE"
-            @fields["TRANSACTION.MODE"] = txmode
+            result = response['POST.VALIDATION'].try :first
+            redirect = response['FRONTEND.REDIRECT_URL'].try :first
 
-            # post to heidelpay gateway to get the redirect url
-            fields = serialize_params(@fields)
-            resp = ssl_post(gateway_url, fields)
-            return nil unless resp
+            raise "Invalid Request, Error Code: #{result}" if result != 'ACK'
+            raise 'Invalid Request. Redirect isn\'t specified.' if redirect.blank?
 
-            # parse the response parameters and return the response url
-            resp_fields = parse_params(resp)
-            URI::decode(resp_fields["FRONTEND.REDIRECT_URL"])
+            redirect
           end
-
-          def gateway_url
-            if test?
-              "https://test-heidelpay.hpcgw.net/sgw/gtw"
-            else
-              "https://heidelpay.hpcgw.net/sgw/gtw"
-            end
-          end
-
-          # set the usage / verwendungszweck
-          def usage=(str)
-            @fields["PRESENTATION.USAGE"] = str
-          end
-
-          private
-
-          def serialize_params(hash)
-            hash.map{ |key, value| "#{key}=#{value}" }.join("&")
-          end
-
-          def parse_params(string)
-            Hash[string.split("&").compact.map{ |tuple| tuple.split("=") }]
-          end
-
         end
       end
     end
